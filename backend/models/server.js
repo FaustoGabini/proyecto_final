@@ -2,8 +2,12 @@ import express from 'express';
 // Cargamos las variables de entorno
 import 'dotenv/config';
 
+
+
 // Importamos las rutas relacionadas con propiedades (inmuebles)
 import propiedadesRoutes from '../routes/propiedades.js';
+import openaiRoutes from '../routes/openai.js';
+
 
 export default class Server {
     constructor() {
@@ -23,6 +27,11 @@ export default class Server {
     routes() {
         // Montamos las rutas de propiedades bajo el path /api/propiedades
         this.app.use('/api/propiedades', propiedadesRoutes);
+        this.app.use('/api/ia', openaiRoutes);
+        // Ruta de prueba para ver si el backend funciona
+        this.app.get('/', (_req, res) => {
+            res.send('🚀 holis');
+        });
     }
 
     listen() {
@@ -31,3 +40,4 @@ export default class Server {
         });
     }
 }
+
