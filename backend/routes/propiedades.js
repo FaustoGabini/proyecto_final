@@ -1,19 +1,17 @@
 import { Router } from 'express';
-
-// Importamos los controladores que manejan la lógica de cada endpoint
 import {
-    obtenerPropiedades, // Controlador para obtener todas las propiedades
-    filtrarPropiedades, // Controlador para aplicar filtros de búsqueda
-} from '../controllers/propiedades.js';
+    getPropiedades,
+    getPropiedadById,
+    searchPropiedades,
+    deletePropiedad,
+} from '../controllers/propiedadesController.js';
 
 const router = Router();
 
-// Ruta principal: devuelve todas las propiedades
-// GET /api/propiedades
-router.get('/', obtenerPropiedades);
-
-// Ruta para filtrar propiedades según parámetros de búsqueda
-// GET /api/propiedades/filtrar?ubicacion=rosario&precioMin=100000
-router.get('/filtrar', filtrarPropiedades);
+// Rutas principales
+router.get('/', getPropiedades); // Listado general con filtros opcionalesrouter.get('/buscar', searchPropiedades); // Busqueda por palabra clave
+router.get('/buscar', searchPropiedades); // Busqueda por palabra clave
+router.get('/:id', getPropiedadById); // Detalle de una propiedad
+router.delete('/:id', deletePropiedad); // Eliminar propiedad
 
 export default router;
