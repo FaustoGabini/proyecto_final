@@ -2,12 +2,13 @@ import express from 'express';
 // Cargamos las variables de entorno
 import 'dotenv/config';
 
-
-
 // Importamos las rutas relacionadas con propiedades (inmuebles)
-import propiedadesRoutes from '../routes/propiedades.js';
 import openaiRoutes from '../routes/openai.js';
-
+import regionesRoutes from '../routes/regiones.js';
+import tiposRoutes from '../routes/tipos.js';
+import partidosRoutes from '../routes/partidos.js';
+import inmobiliariasRoutes from '../routes/inmobiliarias.js';
+import propiedadesRoutes from '../routes/propiedades.js';
 
 export default class Server {
     constructor() {
@@ -30,8 +31,23 @@ export default class Server {
         this.app.use('/api/ia', openaiRoutes);
         // Ruta de prueba para ver si el backend funciona
         this.app.get('/', (_req, res) => {
-            res.send('🚀 holis');
+            res.send('Hello Wordld!');
         });
+
+        // Rutas relacionadas con regiones (provincias o divisiones geográficas)
+        this.app.use('/api/regiones', regionesRoutes);
+
+        // Rutas relacionadas con tipos de propiedad y operación
+        this.app.use('/api/tipos', tiposRoutes);
+
+        // Rutas relacionadas con partidos (divisiones dentro de una región)
+        this.app.use('/api/partidos', partidosRoutes);
+
+        // Rutas relacionadas con inmobiliarias
+        this.app.use('/api/inmobiliarias', inmobiliariasRoutes);
+
+        // Rutas relacionadas con propiedades
+        this.app.use('/api/propiedades', propiedadesRoutes);
     }
 
     listen() {
@@ -40,4 +56,3 @@ export default class Server {
         });
     }
 }
-
