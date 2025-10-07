@@ -2,11 +2,10 @@ import supabase from '../database/config.js';
 
 // ------------------------------------------------------------
 // GET /api/propiedades
-// Devuelve todas las propiedades con paginación y filtros opcionales
+// Búsqueda unificada: permite filtros + texto libre en descripción
 // ------------------------------------------------------------
 export const getPropiedades = async (req, res) => {
     try {
-        // Parámetros de consulta (todos opcionales)
         const {
             region,
             partido,
@@ -19,19 +18,38 @@ export const getPropiedades = async (req, res) => {
             cocheras,
             dormitorios,
             antiguedad,
-            servicios, // palabra o parte del texto a buscar
+            servicios,
+            q, //
+            modo = 'or', // or | and
+            sort = 'id_propiedad_asc',
             page = 1,
             limit = 20,
         } = req.query;
 
-        // Configuración de paginación
-        const currentPage = parseInt(page);
-        const pageSize = parseInt(limit);
+        // ------------------------------------------------------------
+        // Paginación y orden dinámico
+        // ------------------------------------------------------------
+        const currentPage = !isNaN(page) && page > 0 ? parseInt(page) : 1;
+        const pageSize = !isNaN(limit) && limit > 0 ? parseInt(limit) : 20;
         const from = (currentPage - 1) * pageSize;
         const to = from + pageSize - 1;
 
+        const [campoOrden, direccion] = sort.split('_');
+        const asc = direccion?.toLowerCase() !== 'desc';
+        const camposValidos = [
+            'id_propiedad',
+            'antiguedad',
+            'precio.monto',
+            'precio.fecha',
+            'dormitorios',
+            'banos',
+        ];
+        const campoValido = camposValidos.includes(campoOrden)
+            ? campoOrden
+            : 'id_propiedad';
+
         // ------------------------------------------------------------
-        // Construimos la consulta base con todas las relaciones
+        // Construimos la consulta base
         // ------------------------------------------------------------
         let query = supabase
             .from('propiedad')
@@ -54,41 +72,72 @@ export const getPropiedades = async (req, res) => {
             `,
                 { count: 'exact' }
             )
-            .order('id_propiedad', { ascending: true })
+            .order(campoValido, { ascending: asc })
             .range(from, to);
 
         // ------------------------------------------------------------
-        // Filtros relacionales y por valores numéricos
+        // 🔍 Búsqueda textual (q) — palabras o frases
         // ------------------------------------------------------------
-        if (partido) query = query.eq('id_partido', parseInt(partido));
-        if (tipo_propiedad)
+        if (q && q.trim() !== '') {
+            const regex = /"([^"]+)"|(\S+)/g;
+            const palabras = [];
+            let match;
+            while ((match = regex.exec(q)) !== null) {
+                const palabra = match[1] || match[2];
+                if (palabra) palabras.push(palabra.trim());
+            }
+
+            if (palabras.length > 0) {
+                if (modo.toLowerCase() === 'or') {
+                    const filters = palabras.map(
+                        (word) => `descripcion.ilike.%${word}%`
+                    );
+                    query = query.or(filters.join(','));
+                } else if (modo.toLowerCase() === 'and') {
+                    for (const word of palabras) {
+                        query = query.ilike('descripcion', `%${word}%`);
+                    }
+                }
+            }
+        }
+
+        // ------------------------------------------------------------
+        // Filtros relacionales y numéricos (solo si son válidos)
+        // ------------------------------------------------------------
+        if (partido && !isNaN(partido))
+            query = query.eq('id_partido', parseInt(partido));
+        if (tipo_propiedad && !isNaN(tipo_propiedad))
             query = query.eq('id_tipo_propiedad', parseInt(tipo_propiedad));
-        if (tipo_operacion)
+        if (tipo_operacion && !isNaN(tipo_operacion))
             query = query.eq('id_tipo_operacion', parseInt(tipo_operacion));
-        if (inmobiliaria)
+        if (inmobiliaria && !isNaN(inmobiliaria))
             query = query.eq('id_inmobiliaria', parseInt(inmobiliaria));
 
-        // Filtros por precios
-        if (min_precio)
+        if (min_precio && !isNaN(min_precio))
             query = query.gte('precio.monto', parseFloat(min_precio));
-        if (max_precio)
+        if (max_precio && !isNaN(max_precio))
             query = query.lte('precio.monto', parseFloat(max_precio));
 
-        // Filtros por características numéricas
-        if (banos) query = query.gte('banos', parseInt(banos)); // >= cantidad mínima
-        if (cocheras) query = query.gte('cocheras', parseInt(cocheras));
-        if (dormitorios)
+        if (banos && !isNaN(banos)) query = query.gte('banos', parseInt(banos));
+        if (cocheras && !isNaN(cocheras))
+            query = query.gte('cocheras', parseInt(cocheras));
+        if (dormitorios && !isNaN(dormitorios))
             query = query.gte('dormitorios', parseInt(dormitorios));
-        if (antiguedad) query = query.lte('antiguedad', parseInt(antiguedad)); // <= antigüedad máxima
+        if (antiguedad && !isNaN(antiguedad))
+            query = query.lte('antiguedad', parseInt(antiguedad));
 
-        // Filtro por texto (servicios)
-        if (servicios) {
-            // Buscamos que el campo contenga la palabra indicada (case-insensitive)
+        if (
+            servicios &&
+            typeof servicios === 'string' &&
+            servicios.trim() !== ''
+        ) {
             query = query.ilike('servicios', `%${servicios.trim()}%`);
         }
 
-        // Filtro por región → buscamos todos los partidos de esa región
-        if (region) {
+        // ------------------------------------------------------------
+        // Filtro por región (usa los partidos asociados)
+        // ------------------------------------------------------------
+        if (region && !isNaN(region)) {
             const { data: partidos, error: errorPartidos } = await supabase
                 .from('partido')
                 .select('id_partido')
@@ -117,7 +166,7 @@ export const getPropiedades = async (req, res) => {
         }
 
         // ------------------------------------------------------------
-        // Ejecutamos la consulta principal
+        // Ejecutamos la consulta final
         // ------------------------------------------------------------
         const { data, error, count } = await query;
 
@@ -132,10 +181,27 @@ export const getPropiedades = async (req, res) => {
         // Respuesta estandarizada
         // ------------------------------------------------------------
         return res.status(200).json({
+            filtros_aplicados: {
+                region,
+                partido,
+                tipo_propiedad,
+                tipo_operacion,
+                inmobiliaria,
+                min_precio,
+                max_precio,
+                banos,
+                cocheras,
+                dormitorios,
+                antiguedad,
+                servicios,
+                q: q || null,
+                modo: q ? modo : null,
+            },
             total: count || 0,
             pagina_actual: currentPage,
             limite: pageSize,
             total_paginas: totalPages,
+            orden: `${campoValido}_${asc ? 'asc' : 'desc'}`,
             resultados: data,
         });
     } catch (err) {
@@ -143,6 +209,7 @@ export const getPropiedades = async (req, res) => {
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
+
 // ------------------------------------------------------------
 // GET /api/propiedades/:id
 // Devuelve una propiedad específica con todas sus relaciones
@@ -202,11 +269,9 @@ export const searchPropiedades = async (req, res) => {
 
         // Validación básica
         if (!q || q.trim() === '') {
-            return res
-                .status(400)
-                .json({
-                    error: 'Debe especificar al menos una palabra o frase en el parámetro "q".',
-                });
+            return res.status(400).json({
+                error: 'Debe especificar al menos una palabra o frase en el parámetro "q".',
+            });
         }
 
         // Extraemos frases entre comillas o palabras separadas
