@@ -158,7 +158,14 @@ export default function Home() {
 
                             <div className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
                                 <Link
-                                    href='/resultados?q=departamento+moderno'
+                                    href={{
+                                        pathname: '/resultados',
+                                        query: {
+                                            tipo_propiedad: 6,
+
+                                            q: 'moderno',
+                                        },
+                                    }}
                                     className='group'
                                 >
                                     <div className='relative h-80 rounded-2xl overflow-hidden'>
@@ -208,7 +215,12 @@ export default function Home() {
                                 </Link>
 
                                 <Link
-                                    href='/resultados?q=jardín+amplio'
+                                    href={{
+                                        pathname: '/resultados',
+                                        query: {
+                                            q: 'jardin',
+                                        },
+                                    }}
                                     className='group'
                                 >
                                     <div className='relative h-80 rounded-2xl overflow-hidden'>
@@ -230,7 +242,13 @@ export default function Home() {
                                 </Link>
 
                                 <Link
-                                    href='/resultados?q=con+terraza'
+                                    href={{
+                                        pathname: '/resultados',
+                                        query: {
+                                            q: 'terraza',
+                                            servicios: 'terraza',
+                                        },
+                                    }}
                                     className='group'
                                 >
                                     <div className='relative h-80 rounded-2xl overflow-hidden'>
