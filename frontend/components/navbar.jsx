@@ -52,8 +52,13 @@ export default function Navbar() {
                             >
                                 <DropdownMenuItem asChild>
                                     <Link
-                                        href='/resultados?tipo=vista al mar'
-                                        className='flex items-center gap-3 cursor-pointer'
+                                        href={{
+                                            pathname: '/resultados',
+                                            query: {
+                                                q: 'frente al mar',
+                                            },
+                                        }}
+                                        className='group'
                                     >
                                         <Waves className='h-5 w-5 text-primary' />
                                         <span>Frente al mar</span>
@@ -61,16 +66,24 @@ export default function Navbar() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link
-                                        href='/resultados?tipo=departamentos-modernos'
+                                        href={{
+                                            pathname: '/resultados',
+                                            query: {
+                                                q: 'modernos',
+                                            },
+                                        }}
                                         className='flex items-center gap-3 cursor-pointer'
                                     >
                                         <Building2 className='h-5 w-5 text-primary' />
-                                        <span>Departamentos Modernos</span>
+                                        <span>Modernos</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link
-                                        href='/resultados?tipo=cerca-de-retiro'
+                                        href={{
+                                            pathname: '/resultados',
+                                            query: { q: 'cerca de retiro' },
+                                        }}
                                         className='flex items-center gap-3 cursor-pointer'
                                     >
                                         <MapPin className='h-5 w-5 text-primary' />
@@ -79,7 +92,10 @@ export default function Navbar() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link
-                                        href='/resultados?tipo=barrio-privado'
+                                        href={{
+                                            pathname: '/resultados',
+                                            query: { q: 'barrio privado' },
+                                        }}
                                         className='flex items-center gap-3 cursor-pointer'
                                     >
                                         <House className='h-5 w-5 text-primary' />
