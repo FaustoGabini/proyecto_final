@@ -180,7 +180,13 @@ export default function Home() {
                                 </Link>
 
                                 <Link
-                                    href='/resultados?q=casa+con+pileta'
+                                    href={{
+                                        pathname: '/resultados',
+                                        query: {
+                                            tipo_propiedad: 8,
+                                            servicios: 'pileta',
+                                        },
+                                    }}
                                     className='group'
                                 >
                                     <div className='relative h-80 rounded-2xl overflow-hidden'>

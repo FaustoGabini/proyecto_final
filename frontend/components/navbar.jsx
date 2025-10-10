@@ -52,7 +52,7 @@ export default function Navbar() {
                             >
                                 <DropdownMenuItem asChild>
                                     <Link
-                                        href='/resultados?tipo=frente-al-mar'
+                                        href='/resultados?tipo=vista al mar'
                                         className='flex items-center gap-3 cursor-pointer'
                                     >
                                         <Waves className='h-5 w-5 text-primary' />
