@@ -18,6 +18,8 @@ export function useSearchProperties() {
         setLoading(true);
         setError(null);
 
+        console.log(query);
+
         try {
             const apiUrl =
                 process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
