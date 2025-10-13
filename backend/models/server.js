@@ -1,6 +1,8 @@
 import express from 'express';
 // Cargamos las variables de entorno
 import 'dotenv/config';
+import cors from 'cors';
+
 
 // Importamos las rutas relacionadas con propiedades (inmuebles)
 import openaiRoutes from '../routes/openai.js';
@@ -14,6 +16,11 @@ export default class Server {
     constructor() {
         this.app = express();
         this.port = process.env.PORT || 3000;
+        this.app.use(cors({
+      origin: '*', 
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    }));
 
         this.middlewares();
         this.routes();
@@ -28,7 +35,8 @@ export default class Server {
     routes() {
         // Montamos las rutas de propiedades bajo el path /api/propiedades
         this.app.use('/api/propiedades', propiedadesRoutes);
-        this.app.use('/api/ia', openaiRoutes);
+        this.app.use('/api/openai', openaiRoutes);
+
         // Ruta de prueba para ver si el backend funciona
         this.app.get('/', (_req, res) => {
             res.send('Hello Wordld!');

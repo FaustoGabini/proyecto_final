@@ -3,15 +3,22 @@ import { analizarDescripcion } from '../utils/openai.js';
 
 const router = express.Router();
 
-router.post('/etiquetar', async (req, res) => {
-  const { descripcion } = req.body;
+// POST /api/openai/analizar
+router.post('/analizar', async (req, res) => {
   try {
-    const etiquetas = await analizarDescripcion(descripcion);
-    res.json({ etiquetas });
+    const { descripcion } = req.body;
+
+    if (!descripcion) {
+      return res.status(400).json({ error: 'Falta el campo descripcion' });
+    }
+
+    const url = await analizarDescripcion(descripcion);
+    res.json({ endpoint: url });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al procesar la descripción con OpenAI' });
+    console.error("Error en analizarDescripcion:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
 export default router;
+
