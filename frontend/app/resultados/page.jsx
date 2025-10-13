@@ -13,14 +13,23 @@ export default function ResultadosPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const query = searchParams.get('q');
+    const servicios = searchParams.get('servicios');
+    const tipoPropiedad = searchParams.get('tipo_propiedad');
 
     const [page, setPage] = useState(1);
     const { data, properties, loading, error, searchProperties } =
         useSearchProperties();
 
     useEffect(() => {
-        if (query) searchProperties(query, page);
-    }, [query, page]);
+        // Si existe 'servicios' o 'query', pasamos un objeto para construir la query string
+        if (query || servicios || tipoPropiedad) {
+            const opts = {};
+            if (query) opts.q = query;
+            if (servicios) opts.servicios = servicios;
+            if (tipoPropiedad) opts.tipo_propiedad = tipoPropiedad;
+            searchProperties(opts, page);
+        }
+    }, [query, servicios, page]);
 
     const handleNext = () => {
         if (data?.pagina_actual < data?.total_paginas) setPage((p) => p + 1);
