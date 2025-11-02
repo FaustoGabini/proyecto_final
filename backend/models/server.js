@@ -3,7 +3,6 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 
-
 // Importamos las rutas relacionadas con propiedades (inmuebles)
 import openaiRoutes from '../routes/openai.js';
 import regionesRoutes from '../routes/regiones.js';
@@ -15,12 +14,14 @@ import propiedadesRoutes from '../routes/propiedades.js';
 export default class Server {
     constructor() {
         this.app = express();
-        this.port = process.env.PORT || 3000;
-        this.app.use(cors({
-      origin: '*', 
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    }));
+        this.port = process.env.PORT || 8080;
+        this.app.use(
+            cors({
+                origin: '*',
+                methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                allowedHeaders: ['Content-Type', 'Authorization'],
+            })
+        );
 
         this.middlewares();
         this.routes();
