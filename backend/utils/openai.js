@@ -1,11 +1,11 @@
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function analizarDescripcion(descripcion) {
-  const prompt = `Eres un asistente especializado en interpretación semántica de consultas inmobiliarias en Argentina. 
+    const prompt = `Eres un asistente especializado en interpretación semántica de consultas inmobiliarias en Argentina. 
 Tu tarea es convertir una descripción en lenguaje natural realizada por un usuario en una URL de endpoint REST 
 que el backend pueda consumir directamente para consultar la base de datos de propiedades.
 
@@ -47,9 +47,25 @@ Criterios de interpretación:
 5. Si dice “menor a”, “hasta” → max_precio. Si dice “mayor a”, “desde” → min_precio. Si dice “entre X e Y” → min y max.
 6. Si menciona moneda → moneda=pesos o moneda=usd.
 7. “2 dormitorios” → dormitorios=2; “1 baño” → banos=1; “con cochera” → cocheras=1.
-8. “con pileta/jardín/parrilla” → servicios=pileta,jardin,parrilla.
+8. Servicios: mapear a tokens canónicos en minúsculas. Lista canónica y SINÓNIMOS aceptados:
+  - pileta (sinónimos: piscina, pool)
+  - jardin (sinónimos: jardín, parque)
+  - parrilla (sinónimos: asador, quincho con parrilla)
+  - patio
+  - balcon (sinónimos: balcón)
+  - ascensor (sinónimos: elevador)
+  - aire_acondicionado (sinónimos: aire, A/A, climatización)
+  - acepta_mascotas (sinónimos: apto mascotas, pet friendly)
+  - vista_rio (sinónimos: vista al río)
+  - frente_mar (sinónimos: frente al mar, vista al mar)
+  NO uses servicios para cochera/cocheras: eso va como cocheras=1..N.
 9. Si nombra una inmobiliaria → inmobiliaria=nombre.
 10. Devuelve solo la URL que comienza con /api/.
+
+Reglas estrictas:
+- Devuelve SIEMPRE IDs numéricos donde aplique: tipo_propiedad, tipo_operacion (1=Venta, 2=Alquiler), region, partido.
+- Si el usuario pide “alquiler temporal/temporario”, mapear a tipo_operacion=2 (alquiler) a falta de un tipo específico.
+- Evita parámetros no soportados por el backend productivo (por ejemplo, "ambientes" o superficies) salvo que queden como texto en servicios o q. Prioriza: tipo_operacion, tipo_propiedad, partido/region, dormitorios, banos, cocheras, servicios, min/max_precio, moneda.
 
 Usa los siguientes valores y IDs reales extraídos de la base de datos:
 
@@ -433,24 +449,23 @@ Salida:
 /api/propiedades?tipo_operacion=2&tipo_propiedad=9&region=7&cocheras=1&banos=2
 `;
 
+    // Llamada a la API
+    const chatCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o', // usa 4o-mini o 4-turbo para menor costo
+        messages: [
+            { role: 'system', content: prompt },
+            { role: 'user', content: descripcion },
+        ],
+        temperature: 0.2,
+    });
 
-  // Llamada a la API
-  const chatCompletion = await openai.chat.completions.create({
-    model: 'gpt-4o', // usa 4o-mini o 4-turbo para menor costo
-    messages: [
-      { role: 'system', content: prompt },
-      { role: 'user', content: descripcion },
-    ],
-    temperature: 0.2,
-  });
+    const respuesta = chatCompletion.choices[0].message.content.trim();
+    console.log('URL generada:', respuesta);
 
-  const respuesta = chatCompletion.choices[0].message.content.trim();
-  console.log("URL generada:", respuesta);
+    // Validar que la respuesta empiece con /api/
+    if (!respuesta.startsWith('/api/')) {
+        throw new Error('El modelo no devolvió una URL válida: ' + respuesta);
+    }
 
-  // Validar que la respuesta empiece con /api/
-  if (!respuesta.startsWith('/api/')) {
-    throw new Error("El modelo no devolvió una URL válida: " + respuesta);
-  }
-
-  return respuesta;
+    return respuesta;
 }

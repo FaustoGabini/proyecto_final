@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -15,21 +15,72 @@ export default function ResultadosPage() {
     const query = searchParams.get('q');
     const servicios = searchParams.get('servicios');
     const tipoPropiedad = searchParams.get('tipo_propiedad');
+    const tipoOperacion = searchParams.get('tipo_operacion');
+    const region = searchParams.get('region');
+    const partido = searchParams.get('partido');
+    const dormitorios = searchParams.get('dormitorios');
+    const banos = searchParams.get('banos');
+    const cocheras = searchParams.get('cocheras');
+    const minPrecio = searchParams.get('min_precio');
+    const maxPrecio = searchParams.get('max_precio');
+    const moneda = searchParams.get('moneda');
+    const inmobiliaria = searchParams.get('inmobiliaria');
 
     const [page, setPage] = useState(1);
     const { data, properties, loading, error, searchProperties } =
         useSearchProperties();
 
+    const prevKeyRef = useRef('');
+
     useEffect(() => {
-        // Si existe 'servicios' o 'query', pasamos un objeto para construir la query string
-        if (query || servicios || tipoPropiedad) {
-            const opts = {};
-            if (query) opts.q = query;
-            if (servicios) opts.servicios = servicios;
-            if (tipoPropiedad) opts.tipo_propiedad = tipoPropiedad;
+        // Construimos objeto de filtros basado en la URL
+        const opts = {};
+        if (query) opts.q = query;
+        if (servicios) opts.servicios = servicios;
+        if (tipoPropiedad) opts.tipo_propiedad = tipoPropiedad;
+        if (tipoOperacion) opts.tipo_operacion = tipoOperacion;
+        if (region) opts.region = region;
+        if (partido) opts.partido = partido;
+        if (dormitorios) opts.dormitorios = dormitorios;
+        if (banos) opts.banos = banos;
+        if (cocheras) opts.cocheras = cocheras;
+        if (minPrecio) opts.min_precio = minPrecio;
+        if (maxPrecio) opts.max_precio = maxPrecio;
+        if (moneda) opts.moneda = moneda;
+        if (inmobiliaria) opts.inmobiliaria = inmobiliaria;
+
+        const key = JSON.stringify(opts);
+        const prevKey = prevKeyRef.current;
+
+        // Si cambiaron los filtros, reseteamos la página a 1 y no buscamos hasta el próximo render
+        if (key !== prevKey) {
+            prevKeyRef.current = key;
+            if (page !== 1) {
+                setPage(1);
+                return;
+            }
+        }
+
+        // Disparar búsqueda solo si hay al menos un filtro
+        if (Object.keys(opts).length > 0) {
             searchProperties(opts, page);
         }
-    }, [query, servicios, page]);
+    }, [
+        query,
+        servicios,
+        tipoPropiedad,
+        tipoOperacion,
+        region,
+        partido,
+        dormitorios,
+        banos,
+        cocheras,
+        minPrecio,
+        maxPrecio,
+        moneda,
+        inmobiliaria,
+        page,
+    ]);
 
     const handleNext = () => {
         if (data?.pagina_actual < data?.total_paginas) setPage((p) => p + 1);
