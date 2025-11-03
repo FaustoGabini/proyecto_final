@@ -87,14 +87,29 @@ export const getPropiedades = async (req, res) => {
                 if (palabra) palabras.push(palabra.trim());
             }
 
-            if (palabras.length > 0) {
+            // Sanitizar palabras para evitar romper el parser de PostgREST en 'or' cuando hay comas/paréntesis
+            const sanitize = (w) =>
+                w.replace(/[(),]/g, ' ').replace(/\s+/g, ' ').trim();
+            const palabrasSanitizadas = palabras
+                .map(sanitize)
+                .filter((w) => w.length > 0);
+
+            if (palabrasSanitizadas.length > 0) {
                 if (modo.toLowerCase() === 'or') {
-                    const filters = palabras.map(
-                        (word) => `descripcion.ilike.%${word}%`
-                    );
-                    query = query.or(filters.join(','));
+                    if (palabrasSanitizadas.length === 1) {
+                        // Evitar uso de .or() con valores que pueden contener comas; usar ilike directo
+                        query = query.ilike(
+                            'descripcion',
+                            `%${palabrasSanitizadas[0]}%`
+                        );
+                    } else {
+                        const filters = palabrasSanitizadas.map(
+                            (word) => `descripcion.ilike.%${word}%`
+                        );
+                        query = query.or(filters.join(','));
+                    }
                 } else if (modo.toLowerCase() === 'and') {
-                    for (const word of palabras) {
+                    for (const word of palabrasSanitizadas) {
                         query = query.ilike('descripcion', `%${word}%`);
                     }
                 }
@@ -126,12 +141,18 @@ export const getPropiedades = async (req, res) => {
         if (antiguedad && !isNaN(antiguedad))
             query = query.lte('antiguedad', parseInt(antiguedad));
 
-        if (
-            servicios &&
-            typeof servicios === 'string' &&
-            servicios.trim() !== ''
-        ) {
-            query = query.ilike('servicios', `%${servicios.trim()}%`);
+        if (servicios) {
+            // Aceptar 'servicios' como string ("pileta") o array (["pileta","jardin"]).
+            if (typeof servicios === 'string' && servicios.trim() !== '') {
+                query = query.ilike('servicios', `%${servicios.trim()}%`);
+            } else if (Array.isArray(servicios)) {
+                // Requerir que coincidan TODOS los servicios solicitados (AND)
+                for (const s of servicios) {
+                    if (typeof s === 'string' && s.trim() !== '') {
+                        query = query.ilike('servicios', `%${s.trim()}%`);
+                    }
+                }
+            }
         }
 
         // ------------------------------------------------------------
@@ -171,6 +192,36 @@ export const getPropiedades = async (req, res) => {
         const { data, error, count } = await query;
 
         if (error) {
+            // Manejo especial para rangos fuera de límites (PostgREST 416)
+            if (
+                typeof error.message === 'string' &&
+                error.message.toLowerCase().includes('range not satisfiable')
+            ) {
+                return res.status(200).json({
+                    filtros_aplicados: {
+                        region,
+                        partido,
+                        tipo_propiedad,
+                        tipo_operacion,
+                        inmobiliaria,
+                        min_precio,
+                        max_precio,
+                        banos,
+                        cocheras,
+                        dormitorios,
+                        antiguedad,
+                        servicios,
+                        q: q || null,
+                        modo: q ? modo : null,
+                    },
+                    total: 0,
+                    pagina_actual: currentPage,
+                    limite: pageSize,
+                    total_paginas: 0,
+                    orden: `${campoValido}_${asc ? 'asc' : 'desc'}`,
+                    resultados: [],
+                });
+            }
             console.error('Error al obtener propiedades:', error);
             return res.status(500).json({ error: error.message });
         }
