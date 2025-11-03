@@ -11,7 +11,7 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: "InmoIA - Buscador Inmobiliario con IA",
+  title: "InmobIA - Buscador Inmobiliario con IA",
   description: "Plataforma inmobiliaria potenciada por IA para buscar propiedades en Argentina",
   generator: "v0.app",
 }
