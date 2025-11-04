@@ -1,9 +1,14 @@
+"use client"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Home, DollarSign } from "lucide-react"
+import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 
 export default function PropertyCard({ property, index }) {
-  const delayClass = index % 3 === 0 ? "fade-in" : index % 3 === 1 ? "fade-in-delay-1" : "fade-in-delay-2"
+  const [ref, isVisible] = useScrollAnimation({ threshold: 0.2 })
+
+  const delayClass = `animation-delay-${Math.min(index % 3, 2) * 100}`
 
   // Format price with currency
   const formatPrice = (price, currency) => {
@@ -13,7 +18,12 @@ export default function PropertyCard({ property, index }) {
   }
 
   return (
-    <Card className={`overflow-hidden hover:shadow-lg transition-shadow duration-300 ${delayClass}`}>
+    <Card
+      ref={ref}
+      className={`overflow-hidden hover:shadow-lg transition-shadow duration-300 ${
+        isVisible ? `animate-fade-in-up ${delayClass}` : "opacity-0"
+      }`}
+    >
       <div className="relative h-48 w-full overflow-hidden bg-muted">
         <img
           src={

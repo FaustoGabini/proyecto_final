@@ -8,7 +8,12 @@ export default function Footer() {
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <Building2 className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-primary">InmoIA</span>
+              <span className="text-2xl font-bold text-foreground">
+                Inmob
+                <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  IA
+                </span>
+              </span>
             </div>
             <p className="text-muted-foreground max-w-md text-pretty">
               Plataforma de búsqueda de propiedades impulsada por Inteligencia Artificial. Encontrá tu hogar ideal
@@ -37,7 +42,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Sobre InmoIA
+                  Sobre InmobIA
                 </a>
               </li>
               <li>
@@ -53,11 +58,11 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="mailto:info@inmoia.com"
+                  href="mailto:info@inmobia.com"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                 >
                   <Mail className="h-4 w-4" />
-                  info@inmoia.com
+                  info@inmobia.com
                 </a>
               </li>
               <li>
@@ -83,7 +88,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">© 2025 InmoIA. Todos los derechos reservados.</p>
+          <p className="text-sm text-muted-foreground">© 2025 InmobIA. Todos los derechos reservados.</p>
           <div className="flex gap-6">
             <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
               Privacidad
